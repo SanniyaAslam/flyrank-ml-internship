@@ -1,0 +1,11 @@
+{
+  "model": "RandomForestClassifier (n_estimators=200, max_depth=6)",
+  "split": "client-grouped (GroupShuffleSplit, test_size=0.25)",
+  "test_rows": 11550,
+  "action_counts": {
+    "no_action": 6701,
+    "investigate": 4830,
+    "monitor": 19
+  },
+  "declining_rate_in_test": 0.25203463203463206
+}
