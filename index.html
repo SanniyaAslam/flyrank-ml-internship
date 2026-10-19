@@ -100,7 +100,7 @@
 
 <section id="abstract" class="abstract">
   <h2>Abstract</h2>
-  <p>Content teams can review only a few pages each week, so the order of the review queue matters. This study asks whether search signals that are known before a reviewer looks at a page can rank which pages lose clicks over the next two weeks better than a hand-written rule. Using one month (March 2026) of pseudonymized Search Console data from the FlyRank internship warehouse, features were built from days 1–15 and the label from days 16–31, and a stale-and-low-CTR rule was compared with logistic regression and a random forest under a client-grouped holdout. The rule reached a Precision@50 of 0.20, while the random forest reached 0.88 in the main run (0.74 in a later re-run) with a ROC AUC of about 0.91, and the logistic regression reached 0.78. The evidence is observational, covers one month, and the label is partly mechanical, so the result supports human prioritisation of review and nothing more: it is not a causal claim about refreshing pages and not a model of Google’s ranking.</p>
+  <p>Content teams can review only a few pages each week, so the order of the review queue matters. This study asks whether search signals that are known before a reviewer looks at a page can rank which pages lose clicks over the next two weeks better than a hand-written rule. Using one month (March 2026) of pseudonymized Search Console data from the FlyRank internship warehouse, features were built from days 1–15 and the label from days 16–31, and a stale-and-low-CTR rule was compared with logistic regression and a random forest under a client-grouped holdout. On the held-out clients the rule reached a Precision@50 of 0.32, while the logistic regression reached 0.78 and the random forest 0.88, with a ROC AUC of about 0.91. The evidence is observational, covers one month, and the label is partly mechanical, so the result supports human prioritisation of review and nothing more: it is not a causal claim about refreshing pages and not a model of Google’s ranking.</p>
 </section>
 
 <section id="intro">
@@ -131,7 +131,7 @@
   <p>No feature correlates strongly with the label (largest absolute value 0.21, table below), and no feature is computed from the second-half clicks. A before-and-after test showed why grouping matters:</p>
   <div class="scroll">
   <table>
-    <caption>Random row split versus client-grouped split (random forest, same features)</caption>
+    <caption>Random row split versus client-grouped split (random forest, same features, Week 6 run)</caption>
     <thead><tr><th>Split</th><th class="num">Clients in both train and test</th><th class="num">Precision@50</th><th class="num">ROC AUC</th></tr></thead>
     <tbody>
       <tr><td>Random row split</td><td class="num">41</td><td class="num">0.74</td><td class="num">0.928</td></tr>
@@ -158,51 +158,60 @@
 <section id="results">
   <h2>4. Results</h2>
   <figure>
-    <svg viewBox="0 0 640 250" width="100%" role="img" aria-labelledby="chart-title chart-desc">
+    <svg viewBox="0 0 640 215" width="100%" role="img" aria-labelledby="chart-title chart-desc">
       <title id="chart-title">Precision@50 by method</title>
-      <desc id="chart-desc">Hand-written rule 0.20. Logistic regression 0.78. Random forest 0.88 in the main run and 0.74 in a later re-run.</desc>
-      <line class="axis" x1="190" y1="20" x2="190" y2="200"/>
-      <line class="axis" x1="190" y1="200" x2="600" y2="200"/>
+      <desc id="chart-desc">Hand-written rule 0.32. Logistic regression 0.78. Random forest 0.88.</desc>
+      <line class="axis" x1="190" y1="20" x2="190" y2="160"/>
+      <line class="axis" x1="190" y1="160" x2="600" y2="160"/>
       <g font-size="13">
         <text x="180" y="52" text-anchor="end">Hand-written rule</text>
-        <rect class="bar-base" x="190" y="34" width="82" height="28" rx="2"/>
-        <text x="282" y="53" class="sub">0.20</text>
+        <rect class="bar-base" x="190" y="34" width="131" height="28" rx="2"/>
+        <text x="331" y="53" class="sub">0.32</text>
 
         <text x="180" y="94" text-anchor="end">Logistic regression</text>
         <rect class="bar-model" x="190" y="76" width="320" height="28" rx="2" opacity=".72"/>
         <text x="520" y="95">0.78</text>
 
-        <text x="180" y="136" text-anchor="end">Random forest, main run</text>
+        <text x="180" y="136" text-anchor="end">Random forest</text>
         <rect class="bar-model" x="190" y="118" width="361" height="28" rx="2"/>
         <text x="561" y="137">0.88</text>
-
-        <text x="180" y="178" text-anchor="end">Random forest, re-run</text>
-        <rect class="bar-model" x="190" y="160" width="304" height="28" rx="2" opacity=".72"/>
-        <text x="504" y="179">0.74</text>
       </g>
       <g font-size="11" class="sub">
-        <text x="190" y="218" text-anchor="middle">0</text>
-        <text x="395" y="218" text-anchor="middle">0.5</text>
-        <text x="600" y="218" text-anchor="middle">1.0</text>
-        <text x="395" y="238" text-anchor="middle">Precision@50 on client-held-out pages</text>
+        <text x="190" y="178" text-anchor="middle">0</text>
+        <text x="395" y="178" text-anchor="middle">0.5</text>
+        <text x="600" y="178" text-anchor="middle">1.0</text>
+        <text x="395" y="200" text-anchor="middle">Precision@50 on client-held-out pages</text>
       </g>
     </svg>
-    <figcaption>Figure 1. Of the 50 pages each method ranks first, the share that went on to lose clicks. The two random forest bars come from two runs of the same code.</figcaption>
+    <figcaption>Figure 1. Of the 50 pages each method ranks first, the share that went on to lose clicks, on the same client-held-out pages.</figcaption>
   </figure>
   <div class="scroll">
   <table>
-    <caption>Model versus baseline on the same client-held-out pages</caption>
+    <caption>Model versus baseline on the same client-held-out pages (final run, fixed row order)</caption>
     <thead><tr><th>Method</th><th class="num">Precision@50</th><th class="num">ROC AUC</th></tr></thead>
     <tbody>
-      <tr><td>Hand-written rule (Week 4)</td><td class="num">0.20</td><td class="num">not defined</td></tr>
+      <tr><td>Hand-written rule</td><td class="num">0.32</td><td class="num">not defined</td></tr>
       <tr><td>Logistic regression</td><td class="num">0.78</td><td class="num">0.875</td></tr>
-      <tr><td>Random forest, main run</td><td class="num">0.88</td><td class="num">0.909</td></tr>
-      <tr><td>Random forest, grouped re-run</td><td class="num">0.74</td><td class="num">0.907</td></tr>
+      <tr><td>Random forest</td><td class="num">0.88</td><td class="num">0.908</td></tr>
     </tbody>
   </table>
   </div>
-  <p>Both learned models ranked clearly above the rule on this slice, and the random forest’s ROC AUC was stable across runs at about 0.91. Precision@50 was not stable: it moved from 0.88 to 0.74 between runs. The most likely reason is that the warehouse query returned rows in no fixed order, so the same random seed drew different held-out clients each time. The honest summary is “well above the rule, with a top-50 precision somewhere between 0.74 and 0.88”, not a single figure.</p>
+  <p>Both learned models ranked clearly above the rule on the same held-out pages. Two things keep this from being read as a clean multiple. First, the rule’s own Precision@50 depends on which clients are held out: it was 0.20 in the Week 4 and Week 5 runs and 0.32 in the final run. Second, the random forest scored 0.88 in the Week 5 and final runs but 0.74 in one Week 6 run whose query returned rows in no fixed order, so the top-50 figure is best read as a range, while its ROC AUC stayed steady at about 0.91. The final notebook fixes the row order so the split can be repeated.</p>
   <p>The random forest is only modestly better than the logistic regression, so complexity is buying a little here, not a lot, and the logistic regression remains the easier of the two to explain to a reviewer.</p>
+  <div class="scroll">
+  <table>
+    <caption>Random forest feature importance (final run)</caption>
+    <thead><tr><th>Feature</th><th class="num">Importance</th></tr></thead>
+    <tbody>
+      <tr><td>Click-through rate (first half)</td><td class="num">0.820</td></tr>
+      <tr><td>Impressions (first half)</td><td class="num">0.154</td></tr>
+      <tr><td>Average position (first half)</td><td class="num">0.020</td></tr>
+      <tr><td>Word count</td><td class="num">0.005</td></tr>
+      <tr><td>Days since last update</td><td class="num">0.001</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>The forest put most of its weight on first-half click-through rate, and the logistic regression also weighted it heavily (its coefficients are on unscaled features, so their sizes are not strictly comparable). Click-through rate is clicks divided by impressions, and the label compares clicks across the two halves, so part of this signal is likely mechanical (see Limitations). It is not evidence that click-through rate causes decline.</p>
   <h3>Where the model is wrong</h3>
   <p>Missed pages (false negatives) were visible pages, with roughly 1,300 to 12,500 half-month impressions, near-zero click-through rate and good average positions, that the model scored only around 0.70. False alarms were the opposite: pages with 5 to 16 impressions that scored above 0.90. A click-through rate on a handful of impressions is noise, and the model treats it as if it were as reliable as one measured over thousands.</p>
 </section>
@@ -211,7 +220,7 @@
   <h2>5. Limitations and honest framing</h2>
   <ul>
     <li><strong>Observational, one month.</strong> One March 2026 slice. Nothing here shows the result holds in other months, seasons or for new clients, and the warehouse is an unbalanced panel in which clients differ in history length.</li>
-    <li><strong>The label is partly mechanical.</strong> Decline is defined by comparing clicks in two halves, and the features include first-half clicks (through click-through rate). A page with no first-half clicks cannot be labelled declining, and pages with unusually many first-half clicks are more likely to fall back. Some of the model’s skill is therefore likely to be regression toward the mean rather than a genuine decline signal.</li>
+    <li><strong>The label is partly mechanical.</strong> Decline is defined by comparing clicks in two halves, and the features include first-half clicks (through click-through rate). A page with no first-half clicks cannot be labelled declining, and pages with unusually many first-half clicks are more likely to fall back. Some of the model’s skill is therefore likely to be regression toward the mean rather than a genuine decline signal, and the final random forest put most of its importance on first-half click-through rate, which is consistent with that concern.</li>
     <li><strong>Small counts are fragile.</strong> The highest-scored pages in the final queue had about 15 to 19 impressions in the half-month, where a single click changes the label. These are the least reliable rows in the output.</li>
     <li><strong>Data quirk.</strong> Some content update dates fall after the reference date, giving negative staleness. They were clipped to zero, not repaired, and this is part of why staleness behaved as a weak signal.</li>
     <li><strong>No causal claim.</strong> The work does not show that refreshing a page makes it recover, and it says nothing about how Google ranks pages. A high score means “worth a human look first”.</li>
@@ -251,7 +260,7 @@
     <li><a href="https://github.com/SanniyaAslam/flyrank-ml-internship/blob/main/work/notebooks/w07_action_playbook.ipynb">w07_action_playbook</a>: the ranked queue and review rules.</li>
     <li><a href="https://github.com/SanniyaAslam/flyrank-ml-internship/blob/main/work/notebooks/capstone.ipynb">capstone</a>: the notebook that mirrors this paper.</li>
   </ul>
-  <p>The warehouse is gated and its terms forbid redistributing it, so no data is in the repository. To rerun the work, request access to the dataset on Hugging Face, store a read token as a Colab secret named <code>HF_TOKEN</code>, and run each notebook top to bottom. Add an explicit <code>ORDER BY</code> to the feature query to make the split repeatable between runs.</p>
+  <p>The warehouse is gated and its terms forbid redistributing it, so no data is in the repository. To rerun the work, request access to the dataset on Hugging Face, store a read token as a Colab secret named <code>HF_TOKEN</code>, and run each notebook top to bottom. The final notebook orders the feature query by client and content, which makes the split repeatable between runs; earlier notebooks did not, so their figures can differ slightly.</p>
 </section>
 
 <section id="credit">
