@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Which pages are slipping? Ranking content for review with pre-decision search signals</title>
+<meta name="description" content="A client-grouped, leakage-audited comparison of a hand-written rule and learned models for prioritising content review, built on the FlyRank ML Internship dataset.">
+<style>
+  :root {
+    --bg: #ffffff;
+    --ink: #14213d;
+    --muted: #55606f;
+    --rule: #d8dde5;
+    --accent: #1d6fa5;
+    --bar-base: #aeb5c0;
+    --panel: #f3f6fa;
+    --serif: Charter, "Iowan Old Style", "Source Serif Pro", Georgia, serif;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f141b;
+      --ink: #e6ebf2;
+      --muted: #9aa5b4;
+      --rule: #263140;
+      --accent: #5aa9e6;
+      --bar-base: #4a5463;
+      --panel: #161d27;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: var(--serif); font-size: 1.0625rem; line-height: 1.72;
+  }
+  a { color: var(--accent); text-underline-offset: 3px; }
+  a:focus-visible, summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+  .wrap { max-width: 70rem; margin: 0 auto; padding: 3rem 1.25rem 5rem; display: grid; gap: 3rem; grid-template-columns: minmax(0, 1fr); }
+  @media (min-width: 64rem) { .wrap { grid-template-columns: 13rem minmax(0, 41rem); justify-content: center; } }
+  nav.toc { font-family: var(--sans); font-size: .9rem; }
+  @media (min-width: 64rem) { nav.toc { position: sticky; top: 2rem; align-self: start; } }
+  nav.toc p { margin: 0 0 .6rem; font-weight: 600; }
+  nav.toc ol { list-style: none; margin: 0; padding: 0; border-left: 2px solid var(--rule); }
+  nav.toc li a { display: block; padding: .28rem 0 .28rem .9rem; color: var(--muted); text-decoration: none; }
+  nav.toc li a:hover { color: var(--ink); }
+  @media (max-width: 63.99rem) { nav.toc { border-bottom: 1px solid var(--rule); padding-bottom: 1rem; } nav.toc ol { columns: 2; border-left: 0; } nav.toc li a { padding-left: 0; } }
+  header h1 { font-family: var(--sans); font-size: clamp(2rem, 5vw, 3rem); line-height: 1.12; letter-spacing: -0.02em; margin: 0 0 1rem; font-weight: 750; }
+  .byline { font-family: var(--sans); color: var(--muted); font-size: .95rem; margin: 0 0 2rem; }
+  h2 { font-family: var(--sans); font-size: 1.5rem; line-height: 1.25; margin: 3.2rem 0 .8rem; letter-spacing: -0.01em; }
+  h3 { font-family: var(--sans); font-size: 1.08rem; margin: 2rem 0 .4rem; }
+  p { margin: 0 0 1.1rem; }
+  .abstract { background: var(--panel); border-left: 4px solid var(--accent); padding: 1.2rem 1.4rem; margin: 0 0 1rem; }
+  .abstract h2 { margin: 0 0 .5rem; font-size: 1.15rem; }
+  .abstract p:last-child { margin-bottom: 0; }
+  table { width: 100%; border-collapse: collapse; font-family: var(--sans); font-size: .93rem; margin: 1rem 0 1.4rem; }
+  .scroll { overflow-x: auto; }
+  caption { text-align: left; color: var(--muted); padding-bottom: .5rem; }
+  th, td { text-align: left; padding: .55rem .7rem; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  th { font-weight: 650; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  figure { margin: 1.6rem 0; }
+  figcaption { font-family: var(--sans); color: var(--muted); font-size: .88rem; margin-top: .5rem; }
+  svg text { font-family: var(--sans); fill: var(--ink); }
+  svg .sub { fill: var(--muted); }
+  svg .bar-base { fill: var(--bar-base); }
+  svg .bar-model { fill: var(--accent); }
+  svg .axis { stroke: var(--rule); }
+  ol.recs { padding-left: 1.3rem; } ol.recs li { margin-bottom: .9rem; }
+  .nogo { border: 1px solid var(--rule); padding: 1rem 1.3rem; }
+  .nogo ul { margin: .4rem 0 0; padding-left: 1.2rem; }
+  code { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: .88em; background: var(--panel); padding: .08em .35em; border-radius: 3px; }
+  footer { margin-top: 4rem; padding-top: 1.5rem; border-top: 1px solid var(--rule); font-family: var(--sans); font-size: .9rem; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<nav class="toc" aria-label="Sections">
+  <p>Contents</p>
+  <ol>
+    <li><a href="#abstract">Abstract</a></li>
+    <li><a href="#intro">1. Problem</a></li>
+    <li><a href="#data">2. Data</a></li>
+    <li><a href="#method">3. Methodology</a></li>
+    <li><a href="#results">4. Results</a></li>
+    <li><a href="#limits">5. Limitations</a></li>
+    <li><a href="#recs">6. Recommendations</a></li>
+    <li><a href="#repro">7. Reproducibility</a></li>
+    <li><a href="#credit">8. Acknowledgments</a></li>
+  </ol>
+</nav>
+
+<main>
+<header>
+  <h1>Which pages are slipping? Ranking content for review with pre-decision search signals</h1>
+  <p class="byline">Sanniya Aslam · FlyRank ML Internship capstone · Lane 2, refresh and content opportunity scoring · October 2026</p>
+</header>
+
+<section id="abstract" class="abstract">
+  <h2>Abstract</h2>
+  <p>Content teams can review only a few pages each week, so the order of the review queue matters. This study asks whether search signals that are known before a reviewer looks at a page can rank which pages lose clicks over the next two weeks better than a hand-written rule. Using one month (March 2026) of pseudonymized Search Console data from the FlyRank internship warehouse, features were built from days 1–15 and the label from days 16–31, and a stale-and-low-CTR rule was compared with logistic regression and a random forest under a client-grouped holdout. The rule reached a Precision@50 of 0.20, while the random forest reached 0.88 in the main run (0.74 in a later re-run) with a ROC AUC of about 0.91, and the logistic regression reached 0.78. The evidence is observational, covers one month, and the label is partly mechanical, so the result supports human prioritisation of review and nothing more: it is not a causal claim about refreshing pages and not a model of Google’s ranking.</p>
+</section>
+
+<section id="intro">
+  <h2>1. Introduction and problem statement</h2>
+  <p>A content reviewer managing a large portfolio has to choose which pages to look at first. A false alarm costs reviewer hours on a page that was fine; a missed page loses visibility that nobody notices. The decision this work supports is therefore: <em>given limited review capacity, which pages should be opened first?</em></p>
+  <p>The research question is narrow on purpose. Can observable, pre-decision signals (impressions, click-through rate, average position, days since the last update and word count) put pages that go on to lose clicks nearer the top of a queue than a simple, readable rule does? The comparison to a rule is the point: a model is only worth using if it beats something a person could write in one line.</p>
+</section>
+
+<section id="data">
+  <h2>2. Data</h2>
+  <p><strong>Release.</strong> The FlyRank internship warehouse (pseudonymized release v20260703, a star schema with salted hash keys). All client, content, keyword and URL identifiers are hashes; nothing in this paper identifies a client, a page or a query.</p>
+  <p><strong>Tables.</strong> The daily performance fact table (partition <code>month=2026-03</code>), the content dimension and the client dimension.</p>
+  <p><strong>Window.</strong> March 2026, split in time. Days 1–15 supply every feature. Days 16–31 are used only to build the label. The final warehouse month was treated as a sealed test month and was never used.</p>
+  <p><strong>Kept and excluded.</strong> Rows were kept only where Search Console data was available (checked with <code>IS TRUE</code>) and where a page had impressions in the first half. The product’s own decision fields (last optimized date, optimization eligible date) were excluded because they record a decision someone had already made, which would leak the outcome. After joining the two halves the slice has 141,467 page rows; the Week 5 split used 129,917 for training and 11,550 for testing.</p>
+</section>
+
+<section id="method">
+  <h2>3. Methodology</h2>
+  <h3>Label</h3>
+  <p>A page is labelled <em>declining</em> if its clicks in days 16–31 are lower than its clicks in days 1–15. About 20% of pages carry this label. It is a short-window proxy for decline, not a measure of long-term content health.</p>
+  <h3>Features</h3>
+  <p>Five first-half-only features: impressions, click-through rate, average position, days since last update (negative values clipped to zero) and word count. Every feature name carries a <code>_fh</code> suffix as a guard against borrowing from the second half.</p>
+  <h3>Baseline</h3>
+  <p>The rule flags a page when it has gone at least 180 days without an update, has at least 100 impressions and a click-through rate below 2%, and ranks flagged pages by impressions times staleness. Before encoding it, two of its signals were checked on the data: the position-to-CTR relationship held (CTR fell steadily from the top positions to position 50 and beyond), while staleness gave a mixed picture and was kept only as a coarse gate.</p>
+  <h3>Models and validation</h3>
+  <p>A logistic regression (readable coefficients) and a random forest (200 trees, depth 6, balanced classes) were trained and scored on the same held-out pages as the rule, with Precision@50 as the main metric because a reviewer reads a short list, not the whole portfolio. The split is grouped by client with 25% of clients held out, so no client appears on both sides.</p>
+  <h3>Leakage checks</h3>
+  <p>No feature correlates strongly with the label (largest absolute value 0.21, table below), and no feature is computed from the second-half clicks. A before-and-after test showed why grouping matters:</p>
+  <div class="scroll">
+  <table>
+    <caption>Random row split versus client-grouped split (random forest, same features)</caption>
+    <thead><tr><th>Split</th><th class="num">Clients in both train and test</th><th class="num">Precision@50</th><th class="num">ROC AUC</th></tr></thead>
+    <tbody>
+      <tr><td>Random row split</td><td class="num">41</td><td class="num">0.74</td><td class="num">0.928</td></tr>
+      <tr><td>Client-grouped split</td><td class="num">0</td><td class="num">0.74</td><td class="num">0.907</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <div class="scroll">
+  <table>
+    <caption>Correlation of each feature with the declining label</caption>
+    <thead><tr><th>Feature</th><th class="num">Correlation</th></tr></thead>
+    <tbody>
+      <tr><td>Impressions (first half)</td><td class="num">0.210</td></tr>
+      <tr><td>Click-through rate (first half)</td><td class="num">0.180</td></tr>
+      <tr><td>Average position (first half)</td><td class="num">−0.141</td></tr>
+      <tr><td>Word count</td><td class="num">0.049</td></tr>
+      <tr><td>Days since last update</td><td class="num">−0.014</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>The random split looked slightly better on ROC AUC only because it let the model see other pages from the same clients. Precision@50 did not move, which is a reminder that a single top-50 number is a coarse instrument.</p>
+</section>
+
+<section id="results">
+  <h2>4. Results</h2>
+  <figure>
+    <svg viewBox="0 0 640 250" width="100%" role="img" aria-labelledby="chart-title chart-desc">
+      <title id="chart-title">Precision@50 by method</title>
+      <desc id="chart-desc">Hand-written rule 0.20. Logistic regression 0.78. Random forest 0.88 in the main run and 0.74 in a later re-run.</desc>
+      <line class="axis" x1="190" y1="20" x2="190" y2="200"/>
+      <line class="axis" x1="190" y1="200" x2="600" y2="200"/>
+      <g font-size="13">
+        <text x="180" y="52" text-anchor="end">Hand-written rule</text>
+        <rect class="bar-base" x="190" y="34" width="82" height="28" rx="2"/>
+        <text x="282" y="53" class="sub">0.20</text>
+
+        <text x="180" y="94" text-anchor="end">Logistic regression</text>
+        <rect class="bar-model" x="190" y="76" width="320" height="28" rx="2" opacity=".72"/>
+        <text x="520" y="95">0.78</text>
+
+        <text x="180" y="136" text-anchor="end">Random forest, main run</text>
+        <rect class="bar-model" x="190" y="118" width="361" height="28" rx="2"/>
+        <text x="561" y="137">0.88</text>
+
+        <text x="180" y="178" text-anchor="end">Random forest, re-run</text>
+        <rect class="bar-model" x="190" y="160" width="304" height="28" rx="2" opacity=".72"/>
+        <text x="504" y="179">0.74</text>
+      </g>
+      <g font-size="11" class="sub">
+        <text x="190" y="218" text-anchor="middle">0</text>
+        <text x="395" y="218" text-anchor="middle">0.5</text>
+        <text x="600" y="218" text-anchor="middle">1.0</text>
+        <text x="395" y="238" text-anchor="middle">Precision@50 on client-held-out pages</text>
+      </g>
+    </svg>
+    <figcaption>Figure 1. Of the 50 pages each method ranks first, the share that went on to lose clicks. The two random forest bars come from two runs of the same code.</figcaption>
+  </figure>
+  <div class="scroll">
+  <table>
+    <caption>Model versus baseline on the same client-held-out pages</caption>
+    <thead><tr><th>Method</th><th class="num">Precision@50</th><th class="num">ROC AUC</th></tr></thead>
+    <tbody>
+      <tr><td>Hand-written rule (Week 4)</td><td class="num">0.20</td><td class="num">not defined</td></tr>
+      <tr><td>Logistic regression</td><td class="num">0.78</td><td class="num">0.875</td></tr>
+      <tr><td>Random forest, main run</td><td class="num">0.88</td><td class="num">0.909</td></tr>
+      <tr><td>Random forest, grouped re-run</td><td class="num">0.74</td><td class="num">0.907</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>Both learned models ranked clearly above the rule on this slice, and the random forest’s ROC AUC was stable across runs at about 0.91. Precision@50 was not stable: it moved from 0.88 to 0.74 between runs. The most likely reason is that the warehouse query returned rows in no fixed order, so the same random seed drew different held-out clients each time. The honest summary is “well above the rule, with a top-50 precision somewhere between 0.74 and 0.88”, not a single figure.</p>
+  <p>The random forest is only modestly better than the logistic regression, so complexity is buying a little here, not a lot, and the logistic regression remains the easier of the two to explain to a reviewer.</p>
+  <h3>Where the model is wrong</h3>
+  <p>Missed pages (false negatives) were visible pages, with roughly 1,300 to 12,500 half-month impressions, near-zero click-through rate and good average positions, that the model scored only around 0.70. False alarms were the opposite: pages with 5 to 16 impressions that scored above 0.90. A click-through rate on a handful of impressions is noise, and the model treats it as if it were as reliable as one measured over thousands.</p>
+</section>
+
+<section id="limits">
+  <h2>5. Limitations and honest framing</h2>
+  <ul>
+    <li><strong>Observational, one month.</strong> One March 2026 slice. Nothing here shows the result holds in other months, seasons or for new clients, and the warehouse is an unbalanced panel in which clients differ in history length.</li>
+    <li><strong>The label is partly mechanical.</strong> Decline is defined by comparing clicks in two halves, and the features include first-half clicks (through click-through rate). A page with no first-half clicks cannot be labelled declining, and pages with unusually many first-half clicks are more likely to fall back. Some of the model’s skill is therefore likely to be regression toward the mean rather than a genuine decline signal.</li>
+    <li><strong>Small counts are fragile.</strong> The highest-scored pages in the final queue had about 15 to 19 impressions in the half-month, where a single click changes the label. These are the least reliable rows in the output.</li>
+    <li><strong>Data quirk.</strong> Some content update dates fall after the reference date, giving negative staleness. They were clipped to zero, not repaired, and this is part of why staleness behaved as a weak signal.</li>
+    <li><strong>No causal claim.</strong> The work does not show that refreshing a page makes it recover, and it says nothing about how Google ranks pages. A high score means “worth a human look first”.</li>
+  </ul>
+</section>
+
+<section id="recs">
+  <h2>6. Ranked recommendations</h2>
+  <p>The model was turned into a queue with a reason code and an action label for each page. Across the 11,550 held-out pages in the Week 7 run it produced 4,830 pages marked <em>investigate</em>, 19 marked <em>monitor</em> and 6,701 with no action. No page reached the stale-specific <em>refresh now</em> tier, and the top of the queue was made of recently updated, low-volume pages, so staleness was not what drove the highest scores.</p>
+  <ol class="recs">
+    <li><strong>Put a volume floor in front of the queue.</strong> Because the top ranks are tiny-volume pages, require a minimum number of impressions (for example 100 in the window) before a page can be flagged. This is a suggestion from the error analysis and has not yet been tested.</li>
+    <li><strong>Review the “investigate” tier by volume as well as score.</strong> Start with pages where the traffic at stake is large enough to matter.</li>
+    <li><strong>Check for outside explanations first.</strong> Seasonality, a competitor’s new page, a change in search-result layout and tracking problems can each look like decline.</li>
+    <li><strong>Treat any refresh as a test.</strong> Compare refreshed pages with comparable untouched pages at 30 and 60 days, instead of assuming the refresh worked.</li>
+    <li><strong>Revalidate on a schedule.</strong> Retrain or recheck if the declining rate drifts well away from about 20%, if Precision@50 on a fresh month falls below the range seen here, if a client with a very different traffic profile is added, or if three months pass without a check.</li>
+  </ol>
+  <div class="nogo">
+    <p><strong>What should not be automated</strong></p>
+    <ul>
+      <li>Publishing, unpublishing or deleting pages based on the score.</li>
+      <li>Editing page content without a person reviewing that specific page.</li>
+      <li>Presenting the score as a prediction of Google’s ranking behaviour.</li>
+      <li>Promising a client that a refresh will recover traffic.</li>
+    </ul>
+  </div>
+  <p>The cost thinking is simple. A false alarm costs reviewer time; a miss costs visibility nobody noticed. With a fixed weekly review budget, precision at the top of the list is what matters, which is why the reported metric is Precision@50.</p>
+</section>
+
+<section id="repro">
+  <h2>7. Reproducibility</h2>
+  <p>All work lives in the public repository <a href="https://github.com/SanniyaAslam/flyrank-ml-internship">github.com/SanniyaAslam/flyrank-ml-internship</a>, under <code>work/notebooks/</code>:</p>
+  <ul>
+    <li><a href="https://github.com/SanniyaAslam/flyrank-ml-internship/blob/main/work/notebooks/w03_data_contract.ipynb">w03_data_contract</a>: grain, row counts and availability checks.</li>
+    <li><a href="https://github.com/SanniyaAslam/flyrank-ml-internship/blob/main/work/notebooks/w04_baseline_score.ipynb">w04_baseline_score</a>: signal checks and the rule baseline.</li>
+    <li><a href="https://github.com/SanniyaAslam/flyrank-ml-internship/blob/main/work/notebooks/w05_model.ipynb">w05_model</a>: model comparison on a client-grouped split.</li>
+    <li><a href="https://github.com/SanniyaAslam/flyrank-ml-internship/blob/main/work/notebooks/w06_validation_audit.ipynb">w06_validation_audit</a>: the split before-and-after and the leakage audit.</li>
+    <li><a href="https://github.com/SanniyaAslam/flyrank-ml-internship/blob/main/work/notebooks/w07_action_playbook.ipynb">w07_action_playbook</a>: the ranked queue and review rules.</li>
+    <li><a href="https://github.com/SanniyaAslam/flyrank-ml-internship/blob/main/work/notebooks/capstone.ipynb">capstone</a>: the notebook that mirrors this paper.</li>
+  </ul>
+  <p>The warehouse is gated and its terms forbid redistributing it, so no data is in the repository. To rerun the work, request access to the dataset on Hugging Face, store a read token as a Colab secret named <code>HF_TOKEN</code>, and run each notebook top to bottom. Add an explicit <code>ORDER BY</code> to the feature query to make the split repeatable between runs.</p>
+</section>
+
+<section id="credit">
+  <h2>8. Acknowledgments and data credit</h2>
+  <p>Built on the FlyRank ML Internship dataset, provided by <a href="https://flyrank.ai">FlyRank</a> for anonymized research and education use. Thanks to the FlyRank internship team for the sessions, the starter repository and the dataset. An AI assistant helped draft code and text; I ran the notebooks and checked the results reported here.</p>
+</section>
+
+<footer>
+  <p>All results are observed, directional and intended as decision-support. No client names, page addresses or search queries appear in this paper.</p>
+</footer>
+</main>
+</div>
+</body>
+</html>
